@@ -10,11 +10,11 @@ int main(int argc, char* argv[]){
     source.compute_normal();
     ExperimentViewer exp_viewer("Point Cloud Exp Viewer");
     exp_viewer.set_pointsize(3);
-    exp_viewer.addNormalCloud( source, "hoge", 5, 1);
     exp_viewer.set_color(1.0, 0, 0);
+    exp_viewer.addNormalCloud( source, "hoge", 5, 1);
+    exp_viewer.set_color_heatmap(1/3.14159265);
     exp_viewer.addRawCloud( source, "fuga");
-    pcl::visualization::PCLVisualizer::Ptr viewer = exp_viewer();
-    while ( !viewer->wasStopped() ){
-        viewer->spinOnce();
+    while ( !exp_viewer.wasStopped() ){
+        exp_viewer.spinOnce();
     }
 }

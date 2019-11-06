@@ -9,32 +9,77 @@
 #include "common.hpp"
 #include "experiment_cloud.hpp"
 
+struct PointType{
+    double r, b, g, c;
+    int size;
+};
+void keyboard_callback(const pcl::visualization::KeyboardEvent &event, void* cookie)
+{
+    PointType* pt;
+    pt = (PointType*)cookie;
+    if(event.keyDown()){
+        switch(event.getKeyCode()){
+            case '+':
+                pt->size += 1;
+                break;
+            case '-':
+                pt->size -= 1;
+                break;
+            default:
+                break;
+        }
+
+    }
+}
 #define SET_PCL_RENDER_PROP setPointCloudRenderingProperties
-class ExperimentViewer{
+class ExperimentViewer : public pcl::visualization::PCLVisualizer{
     public:
     using Ptr = std::shared_ptr<ExperimentViewer>;
-    pcl::visualization::PCLVisualizer::Ptr viewer;
     ExperimentViewer(std::string viewer_name = "Experiment Viewer")
-        : viewer(new pcl::visualization::PCLVisualizer(viewer_name))
-        , r_(1.0), b_(1.0), g_(1.0), size_(1.0)
+        : pt_({1.0, 1.0, 1.0, 0.5, 1})
     {
-        viewer->setBackgroundColor(0, 0, 0);
+
+        setWindowName(viewer_name);
+        this->setBackgroundColor(0, 0, 0);
+        void* forced_cookie = reinterpret_cast<void*>(&pt_);
+        this->registerKeyboardCallback(&keyboard_callback, forced_cookie);
     }
-    pcl::visualization::PCLVisualizer::Ptr operator() (){
-        return viewer;
+    inline void set_color_heatmap() {
+        set_color_heatmap(pt_.c);
     }
-    pcl::visualization::PCLVisualizer& operator=(ExperimentViewer v){
-        viewer = v.viewer;
-        return *viewer;
+
+    inline void set_color_heatmap(double c) {
+        constexpr double pi = 3.14159265358;
+        if(c < -0.1){
+            pt_.r = 1-exp(1/c);
+            pt_.g = 1-exp(1/c);
+            pt_.b = 1-exp(1/c);
+            return;
+        }
+        if (c > 1.1){
+            pt_.r = 1-exp(-1/(c-1));
+            pt_.g = 1-exp(-1/(c-1));
+            pt_.b = 0;
+            return;
+        }
+        if( c <= 0.5){
+            pt_.r = std::cos(pi*c);
+            pt_.b = 0;
+        }else{
+            pt_.r = 0;
+            pt_.b = std::cos(pi*(1-c));
+        }
+        pt_.g = std::sin(pi*c);
     }
+
     inline void set_color(double r, double g, double b) {
-        r_ = r; g_ = g; b_ = b;
+        pt_.r = r; pt_.g = g; pt_.b = b;
     }
     inline void set_size(int width, int height){
-	    viewer->setSize(width, height);
+	    this->setSize(width, height);
      }
     inline void set_pointsize(int size) {
-        size_ = size;
+        pt_.size = size;
     }
     template<typename T>
     void addNormalCloud(
@@ -49,24 +94,25 @@ class ExperimentViewer{
         auto cld = cloud.get_cloud_opt();
         auto mr = cloud.get_mr_opt();
         double scale = scale_mr * mr.value();
-        viewer->addPointCloudNormals<pcl::PointNormal>
+        this->addPointCloudNormals<pcl::PointNormal>
             (cld.value(), level, scale, id, view_point);
-        viewer->SET_PCL_RENDER_PROP(PCL_VISUALIZER_COLOR, r_, g_, b_, id);
-        viewer->SET_PCL_RENDER_PROP(PCL_VISUALIZER_POINT_SIZE, size_, id);
+        this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_COLOR,pt_.r,pt_.g,pt_.b,id);
+        this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_POINT_SIZE, pt_.size, id);
     }
 
     template<typename T>
     void addRawCloud(ExperimentCloud<T>const& cloud, std::string id)
     {
         using namespace pcl::visualization;
-        viewer->addPointCloud<T>(cloud.get_rawcloud_opt().value(), id);
-        viewer->SET_PCL_RENDER_PROP(PCL_VISUALIZER_COLOR, r_, g_, b_, id);
-        viewer->SET_PCL_RENDER_PROP(PCL_VISUALIZER_POINT_SIZE, size_, id);
+        this->addPointCloud<T>(cloud.get_rawcloud_opt().value(), id);
+        this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_COLOR,pt_.r,pt_.g,pt_.b,id);
+        this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_POINT_SIZE, pt_.size, id);
     }
     private:
     std::string iterative_id;
-    double r_, g_, b_;
-    double size_;
+    PointType pt_;
+    private:
+    
 };
 #undef SET_PCL_RENDER_PROP
 
