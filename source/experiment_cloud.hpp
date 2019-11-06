@@ -94,7 +94,6 @@ class ExperimentCloud {
         computed_size_ = true;
     }
 
-    
     NormalCloudPtr compute_normal(){
         if(computed_normal_)
             return cloud_;

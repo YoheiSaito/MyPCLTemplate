@@ -1,7 +1,6 @@
 # cmakeの要求バージョン
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
-
 # 実行ファイル名
 project(main)
 

@@ -115,5 +115,4 @@ class ExperimentViewer : public pcl::visualization::PCLVisualizer{
     
 };
 #undef SET_PCL_RENDER_PROP
-
 #endif    //EXPERIMENT_VIEWER_HPP
