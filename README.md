@@ -1,7 +1,7 @@
 # MyPCLTemplate
 PointCloudLibraryを扱う際のテンプレート
 
-## how to start
+## はじめかた
 ```
 mkdir source
 mv `ls -a | grep source`
