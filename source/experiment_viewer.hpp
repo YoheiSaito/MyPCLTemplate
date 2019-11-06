@@ -25,6 +25,12 @@ void keyboard_callback(const pcl::visualization::KeyboardEvent &event, void* coo
             case '-':
                 pt->size -= 1;
                 break;
+            case '!':
+                pt->c -= 0.01;
+                break;
+            case '@':
+                pt->c += 0.01;
+                break;
             default:
                 break;
         }
@@ -49,27 +55,41 @@ class ExperimentViewer : public pcl::visualization::PCLVisualizer{
     }
 
     inline void set_color_heatmap(double c) {
-        constexpr double pi = 3.14159265358;
-        if(c < -0.1){
-            pt_.r = 1-exp(1/c);
-            pt_.g = 1-exp(1/c);
-            pt_.b = 1-exp(1/c);
-            return;
-        }
-        if (c > 1.1){
-            pt_.r = 1-exp(-1/(c-1));
-            pt_.g = 1-exp(-1/(c-1));
-            pt_.b = 0;
-            return;
-        }
-        if( c <= 0.5){
-            pt_.r = std::cos(pi*c);
-            pt_.b = 0;
+        constexpr double pi_ = 4*3.14159265358;
+        pt_.c = c;
+        if( c < 0){
+            set_color_heatmap(c+1.5);
+        } else if( c <= 0.25){
+            pt_.r = 0.0;
+            pt_.g = (-std::cos(pi_*c)+1)/2;
+            pt_.b = 1.0;
+        }else if( c <= 0.5){
+            pt_.r = 0.0;
+            pt_.b = (-std::cos(pi_*c)+1)/2;
+            pt_.g = 1.0;
+        }else if( c <= 0.75){
+            pt_.r = (-std::cos(pi_*c)+1)/2;
+            pt_.g = 1.0;
+            pt_.b = 0.0;
+        }else if(c < 1.0) {
+            pt_.r = 1.0;
+            pt_.g = (-std::cos(pi_*c)+1)/2;
+            pt_.b = 0.0;
+        }else if(1 < c  && c < 1.25){
+            pt_.r = 1.0;
+            pt_.g = 0.0;
+            pt_.b = (-std::cos(pi_*c)+1)/2;
+        }else if(c < 1.50){
+            pt_.r = (-std::cos(pi_*c)+1)/2;
+            pt_.g = 0.0;
+            pt_.b = 1.0;
         }else{
-            pt_.r = 0;
-            pt_.b = std::cos(pi*(1-c));
+            c*=4;
+            c = static_cast<int>(c)%6;
+            c/=4;
+            set_color_heatmap(c);
         }
-        pt_.g = std::sin(pi*c);
+
     }
 
     inline void set_color(double r, double g, double b) {
