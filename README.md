@@ -6,10 +6,11 @@ PointCloudLibraryを扱う際のテンプレート
 git clone https://github.com/YoheiSaito/MyPCLTemplate.git
 cd MyPCLTemplate
 mkdir source
-mv `ls -a | grep -v -e source -e \. -e \.\.` source
+mv .git `ls -a | grep -v source |grep -v "^\." ` source
 mkdir build
 cd build
 cmake ../source/
 cp ../source/example.ini .
 make
+./main example.ini
 ```
