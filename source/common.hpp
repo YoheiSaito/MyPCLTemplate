@@ -1,6 +1,7 @@
 #ifndef     COMMON_HPP
 #define     COMMON_HPP
 #include <memory>
+#include <vector>
 #include <string>
 #include <optional>
 #include <initializer_list>
@@ -17,7 +18,6 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/search/kdtree.h>
-#include <pcl/visualization/pcl_visualizer.h>
 using shared_ptree = std::shared_ptr<boost::property_tree::ptree>;
 
 #endif    //COMMON_HPP

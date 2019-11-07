@@ -30,24 +30,22 @@ class ExperimentCloud {
         , raw_cloud_  (new PointCloud()),  cloud_ (new NormalCloud())
         , raw_kdtree_ (new RawKdtree ()), kdtree_ (new      Kdtree())
     {
-        ini_ = ini_ptr;
+        load_cloud();
+        raw_kdtree_->setInputCloud(raw_cloud_);
+    }
+
+    void load_cloud(){
         common_dir_ = ini_->get<std::string>("common.dataset_path");
         boost::filesystem::path filename(common_dir_);
         filename /= ini_->get<std::string>( atr_ + ".filename");
         pcl::io::loadPCDFile(filename.c_str(), *raw_cloud_);
-
-        // remove nan
-        typename pcl::PassThrough<PointT> pass;
-        pass.setInputCloud(raw_cloud_);
-        pass.filter(*raw_cloud_);
-
-        raw_kdtree_->setInputCloud(raw_cloud_);
+        remove_nan_from_raw();
     }
 
     protected:
+    ExperimentCloud(void) {}
     // property 
     shared_ptree ini_;
-    std::string atr_;
     std::string common_dir_;
     bool computed_normal_, computed_size_;
 
@@ -66,6 +64,7 @@ class ExperimentCloud {
     Eigen::Vector3f max_;
 
     // member method
+    std::string atr_;
     public:
     void compute_cloudsize(){
         const int K(2);
@@ -94,24 +93,24 @@ class ExperimentCloud {
         computed_size_ = true;
     }
 
-    NormalCloudPtr compute_normal(){
-        if(computed_normal_)
+    NormalCloudPtr compute_normal(double normal_r = -1){
+        if( computed_normal_ && normal_r == -1 )
             return cloud_;
         if( !computed_size_){
             compute_cloudsize();
         }
         copyPointCloud(*raw_cloud_, *cloud_);
-        double r = ini_->get<double>(atr_ + ".normal_radius_mr") * mr_;
+        auto r_opt = ini_->get_optional<double>(atr_ + ".normal_radius_mr");
+        double r = 10 * mr_;
+        if(normal_r != -1)
+            r = normal_r * mr_;
+        else if(r_opt)
+            r =  r_opt.get() * mr_;
         typename pcl::NormalEstimation<PointT, pcl::PointNormal>  ne;
         ne.setInputCloud(raw_cloud_);
         ne.setRadiusSearch (r);
         ne.compute(*cloud_);
-        // remove nan
-        pcl::PassThrough<pcl::PointNormal> pass;
-        pass.setFilterFieldName ("normal_x");
-        pass.setFilterLimits(-1.1, 1.1);
-        pass.setInputCloud(cloud_);
-        pass.filter(*cloud_);
+        remove_nan_from_cloud();
         kdtree_->setInputCloud(cloud_);
         computed_normal_ = true;
         return cloud_;
@@ -214,6 +213,28 @@ class ExperimentCloud {
         if( !computed_size_ )
             return std::nullopt;
         return min_;
+    }
+    std::optional<std::string> get_id_atr_opt() const{
+        return atr_;
+    }
+    std::string get_id_atr() const{
+        return atr_;
+    }
+    protected:
+    void remove_nan_from_raw(void){
+        typename pcl::PassThrough<PointT> pass;
+        pass.setInputCloud(raw_cloud_);
+        pass.filter(*raw_cloud_);
+    }
+    void remove_nan_from_cloud(void){
+        // remove nan
+        if( !computed_normal_ )
+            return;
+        pcl::PassThrough<pcl::PointNormal> pass;
+        pass.setFilterFieldName ("normal_x");
+        pass.setFilterLimits(-1.1, 1.1);
+        pass.setInputCloud(cloud_);
+        pass.filter(*cloud_);
     }
 };
 
