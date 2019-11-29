@@ -14,32 +14,30 @@ class ExperimentCloud {
     // type alias for point cloud
     using Ptr            = typename std::shared_ptr<ExperimentCloud<PointT>>;
     using PointCloud     = typename pcl::PointCloud<PointT>;
-    using NormalCloud    = typename pcl::PointCloud<pcl::PointNormal>;
+    using NormalCloud    = typename pcl::PointCloud<pcl::Normal>;
     using PointCloudPtr  = typename PointCloud::Ptr;
     using NormalCloudPtr = typename NormalCloud::Ptr;
 
     // type alias for kdtree
-    using RawKdtree    = typename pcl::search::KdTree<PointT>;
-    using Kdtree       = typename pcl::search::KdTree<pcl::PointNormal>;
-    using RawKdtreePtr = typename RawKdtree::Ptr;
-    using KdtreePtr    = typename Kdtree::Ptr;
+    using Kdtree    = typename pcl::search::KdTree<PointT>;
+    using KdtreePtr = typename Kdtree::Ptr;
     ExperimentCloud(shared_ptree ini_ptr, std::string atr)
         : ini_(ini_ptr)
         , atr_(atr)
         , computed_size_(false), computed_normal_(false)
-        , raw_cloud_  (new PointCloud()),  cloud_ (new NormalCloud())
-        , raw_kdtree_ (new RawKdtree ()), kdtree_ (new      Kdtree())
+        , cloud_  (new PointCloud()),  normal_ (new NormalCloud())
+        , kdtree_ (new Kdtree ())
     {
         load_cloud();
-        raw_kdtree_->setInputCloud(raw_cloud_);
+        kdtree_->setInputCloud(cloud_);
     }
 
     void load_cloud(){
         common_dir_ = ini_->get<std::string>("common.dataset_path");
         boost::filesystem::path filename(common_dir_);
         filename /= ini_->get<std::string>( atr_ + ".filename");
-        pcl::io::loadPCDFile(filename.c_str(), *raw_cloud_);
-        remove_nan_from_raw();
+        pcl::io::loadPCDFile(filename.c_str(), *cloud_);
+        remove_nan_from_cloud();
     }
 
     protected:
@@ -50,10 +48,9 @@ class ExperimentCloud {
     bool computed_normal_, computed_size_;
 
     // point cloud
-    PointCloudPtr raw_cloud_;
-    NormalCloudPtr cloud_;
+    PointCloudPtr cloud_;
+    NormalCloudPtr normal_;
     KdtreePtr kdtree_;
-    RawKdtreePtr raw_kdtree_;
 
     // attribute of point cloud
     double mr_;
@@ -73,8 +70,8 @@ class ExperimentCloud {
         accumulator_set<float, stats<tag::median> > acc_range;
         std::vector<int> idx(2);
         std::vector<float> sq_dist(2);
-        for(auto&& p : raw_cloud_->points){
-            raw_kdtree_->nearestKSearch( p, K, idx, sq_dist);
+        for(auto&& p : cloud_->points){
+            kdtree_->nearestKSearch( p, K, idx, sq_dist);
             acc_range(sq_dist[1]);
             acc_x(p.x);
             acc_y(p.y);
@@ -95,45 +92,39 @@ class ExperimentCloud {
 
     NormalCloudPtr compute_normal(double normal_r = -1){
         if( computed_normal_ && normal_r == -1 )
-            return cloud_;
+            return normal_;
         if( !computed_size_){
             compute_cloudsize();
         }
-        copyPointCloud(*raw_cloud_, *cloud_);
         auto r_opt = ini_->get_optional<double>(atr_ + ".normal_radius_mr");
         double r = 10 * mr_;
         if(normal_r != -1)
             r = normal_r * mr_;
         else if(r_opt)
             r =  r_opt.get() * mr_;
-        typename pcl::NormalEstimation<PointT, pcl::PointNormal>  ne;
-        ne.setInputCloud(raw_cloud_);
+
+        typename pcl::NormalEstimation<PointT, pcl::Normal>  ne;
+        ne.setInputCloud(cloud_);
         ne.setRadiusSearch (r);
-        ne.compute(*cloud_);
-        remove_nan_from_cloud();
-        kdtree_->setInputCloud(cloud_);
+        ne.compute(*normal_);
+        remove_nan_from_normal();
         computed_normal_ = true;
-        return cloud_;
+        return normal_;
     }
 
     //getter 
     // get is not const method
     // get_opt is const method 
-    NormalCloudPtr get_cloud(){
+    NormalCloudPtr get_normal(){
         if( !computed_normal_ )
             compute_normal();
+        return normal_;
+    }
+    PointCloudPtr get_cloud() const {
         return cloud_;
     }
-    KdtreePtr get_cloud_kdtree(){
-        if( !computed_normal_ )
-            compute_normal();
+    KdtreePtr get_kdtree() const{
         return kdtree_;
-    }
-    PointCloudPtr get_rawcloud() const {
-        return raw_cloud_;
-    }
-    RawKdtreePtr get_raw_kdtree() const{
-        return raw_kdtree_;
     }
     double get_mr(){
         if( !computed_size_ )
@@ -150,7 +141,7 @@ class ExperimentCloud {
             compute_cloudsize();
         return center_;
     }
-    Eigen::Vector3f get_cloud_size(){
+    Eigen::Vector3f get_normal_size(){
         if( !computed_size_ )
             compute_cloudsize();
         return size_;
@@ -166,23 +157,18 @@ class ExperimentCloud {
         return min_;
     }
 
-    std::optional<NormalCloudPtr> get_cloud_opt() const {
+    std::optional<NormalCloudPtr> get_normal_opt() const {
         if( !computed_normal_)
             return std::nullopt;
-        return cloud_;
+        return normal_;
     }
     
-    std::optional<PointCloudPtr> get_rawcloud_opt() const {
-        return raw_cloud_;
+    std::optional<PointCloudPtr> get_cloud_opt() const {
+        return cloud_;
     }
 
-    std::optional<KdtreePtr> get_cloud_kdtree_opt() const{
-        if( !computed_normal_ )
-            return std::nullopt;
+    std::optional<KdtreePtr> get_kdtree_opt() const{
         return kdtree_;
-    }
-    std::optional<RawKdtreePtr> get_raw_kdtree_opt() const{
-        return raw_kdtree_;
     }
     std::optional<double> get_mr_opt() const {
         if( !computed_size_ )
@@ -199,7 +185,7 @@ class ExperimentCloud {
             return std::nullopt;
         return center_;
     }
-    std::optional<Eigen::Vector3f> get_cloud_size_opt() const {
+    std::optional<Eigen::Vector3f> get_normal_size_opt() const {
         if( !computed_size_ )
             return std::nullopt;
         return size_;
@@ -221,20 +207,40 @@ class ExperimentCloud {
         return atr_;
     }
     protected:
-    void remove_nan_from_raw(void){
-        typename pcl::PassThrough<PointT> pass;
-        pass.setInputCloud(raw_cloud_);
-        pass.filter(*raw_cloud_);
-    }
     void remove_nan_from_cloud(void){
+        typename pcl::PassThrough<PointT> pass;
+        pass.setInputCloud(cloud_);
+        pass.filter(*cloud_);
+    }
+    void remove_nan_from_normal(void){
         // remove nan
         if( !computed_normal_ )
             return;
+        pcl::PointCloud<pcl::PointNormal>::Ptr tmp
+            (new pcl::PointCloud<pcl::PointNormal>);
+        pcl::concatenateFields(*cloud_, *normal_, *tmp);
         pcl::PassThrough<pcl::PointNormal> pass;
         pass.setFilterFieldName ("normal_x");
-        pass.setFilterLimits(-1.1, 1.1);
-        pass.setInputCloud(cloud_);
-        pass.filter(*cloud_);
+        pass.setFilterLimits(-1.001, 1.001);
+        pass.setInputCloud(tmp);
+        pass.setFilterFieldName ("normal_y");
+        pass.setFilterLimits(-1.001, 1.001);
+        pass.setInputCloud(tmp);
+        pass.setFilterFieldName ("normal_z");
+        pass.setFilterLimits(-1.001, 1.001);
+        pass.setInputCloud(tmp);
+        pass.filter(*tmp);
+
+        cloud_  = PointCloudPtr (new PointCloud);
+        normal_ = NormalCloudPtr(new NormalCloud);
+        cloud_ ->resize(tmp->size());
+        normal_->resize(tmp->size());
+        for(int i = 0; i < tmp->points.size(); i++){
+            cloud_->points[i].getVector4fMap() 
+                    = tmp->points[i].getVector4fMap();
+            normal_->points[i].getNormalVector4fMap() 
+                    = tmp->points[i].getNormalVector4fMap();
+        }
     }
 };
 

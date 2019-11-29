@@ -2,7 +2,7 @@
 #include "utils/random.hpp"
 #include "experiment_cloud.hpp"
 #include "experiment_viewer.hpp"
-#include "experiment_iss.hpp"
+/* #include "experiment_iss.hpp" */
 
 int main(int argc, char* argv[]){
     using PT = pcl::PointXYZ; // PT is input Point Type
@@ -16,7 +16,7 @@ int main(int argc, char* argv[]){
     target->compute_cloudsize();
     target->compute_normal();
     
-    ExperimentISS<PT>::Ptr iss(new ExperimentISS<PT>(source, pt));
+    /* ExperimentISS<PT>::Ptr iss(new ExperimentISS<PT>(source, pt)); */
 
     ExperimentViewer exp_viewer("Point Cloud Exp Viewer");
 
@@ -24,10 +24,12 @@ int main(int argc, char* argv[]){
     exp_viewer.set_color_heatmap(0.1);
     exp_viewer.addRawCloud(*source);
     exp_viewer.set_color_heatmap(0.5);
-    exp_viewer.set_pointsize(4);
-    exp_viewer.addNormalCloud(*iss);
-    exp_viewer.set_color_heatmap(0.9);
-    exp_viewer.addRawCloud(*iss);
+    exp_viewer.addNormalCloud(*source);
+    exp_viewer.set_color_heatmap(0.5);
+    /* exp_viewer.set_pointsize(4); */
+    /* exp_viewer.addNormalCloud(*iss); */
+    /* exp_viewer.set_color_heatmap(0.9); */
+    /* exp_viewer.addRawCloud(*iss); */
 
     exp_viewer.setSize(1500,800);
     while ( !exp_viewer.wasStopped() ){

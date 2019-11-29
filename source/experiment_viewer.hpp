@@ -107,16 +107,8 @@ class ExperimentViewer : public pcl::visualization::PCLVisualizer{
             int view_point = 0
 
     ){
-        using namespace pcl::visualization;
-        auto cld = cloud.get_cloud_opt();
-        auto mr = cloud.get_mr_opt();
         std::string id = cloud.get_id_atr() + "_normalcloud";
-        double scale = scale_mr * mr.value();
-        this->addPointCloudNormals<pcl::PointNormal>
-            (cld.value(), level, scale, id, view_point);
-        this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_COLOR,pt_.r,pt_.g,pt_.b,id);
-        this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_POINT_SIZE, pt_.size, id);
-        used_id.push_back(id);
+        addNormalCloud(cloud, id, scale_mr, level, view_point);
     }
 
     template<typename T>
@@ -129,11 +121,13 @@ class ExperimentViewer : public pcl::visualization::PCLVisualizer{
 
     ){
         using namespace pcl::visualization;
-        auto cld = cloud.get_cloud_opt();
+        auto cld     = cloud.get_cloud_opt();
+        auto nrm_opt = cloud.get_normal_opt();
+        pcl::PointCloud<pcl::Normal>::ConstPtr nrm(nrm_opt.value());
         auto mr = cloud.get_mr_opt();
         double scale = scale_mr * mr.value();
-        this->addPointCloudNormals<pcl::PointNormal>
-            (cld.value(), level, scale, id, view_point);
+        this->addPointCloudNormals<T, pcl::Normal>
+            (cld.value(), nrm, level, scale, id, view_point);
         this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_COLOR,pt_.r,pt_.g,pt_.b,id);
         this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_POINT_SIZE, pt_.size, id);
         used_id.push_back(id);
@@ -144,7 +138,7 @@ class ExperimentViewer : public pcl::visualization::PCLVisualizer{
     {
         using namespace pcl::visualization;
         std::string id = cloud.get_id_atr() + "_rawcloud";
-        this->addPointCloud<T>(cloud.get_rawcloud_opt().value(), id);
+        this->addPointCloud<T>(cloud.get_cloud_opt().value(), id);
         this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_COLOR,pt_.r,pt_.g,pt_.b,id);
         this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_POINT_SIZE, pt_.size, id);
         used_id.push_back(id);
@@ -153,7 +147,7 @@ class ExperimentViewer : public pcl::visualization::PCLVisualizer{
     void addRawCloud(ExperimentCloud<T>const& cloud, std::string id)
     {
         using namespace pcl::visualization;
-        this->addPointCloud<T>(cloud.get_rawcloud_opt().value(), id);
+        this->addPointCloud<T>(cloud.get_cloud_opt().value(), id);
         this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_COLOR,pt_.r,pt_.g,pt_.b,id);
         this->SET_PCL_RENDER_PROP(PCL_VISUALIZER_POINT_SIZE, pt_.size, id);
         used_id.push_back(id);
