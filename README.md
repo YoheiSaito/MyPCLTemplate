@@ -26,3 +26,6 @@ MyPCLTemplateがクローンされ, git initが実行される
 
 commandがdocker内のprojectファイルでcommandが実行される
 commandを省略するとbashが実行される
+
+## License
+MIT
