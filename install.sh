@@ -4,7 +4,7 @@ install_path=$HOME/.local/bin/
 if [[ -d $install_path ]]; then
   mv pcl_builder $install_path
 else
-  mkdir https://raw.githubusercontent.com/YoheiSaito/MyPCLTemplate/master/install.sh-p $install_path
+  mkdir -p $install_path
   mv pcl_builder $install_path
   PATH=$PATH:$(echo $install_path)
   echo "export PATH=$PATH:$(echo $install_path)" >> $HOME/.profile
