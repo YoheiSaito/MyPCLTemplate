@@ -1,0 +1,47 @@
+#!/bin/bash
+PROJECT_PATH=$(pwd)
+dataset=/home/pcd_data/
+template_url=git@github.com:YoheiSaito/MyPCLTemplate
+init() {
+    if [ "$1" = "" ]; then
+        return 0;
+    fi
+    git clone $template_url $1
+    mkdir $1/build
+    rm -rf $1/.git
+    cd $1 && git init 
+}
+
+cmake() {
+    docker run -it --rm \
+        -v $PROJECT_PATH:/project -v$dataset:/dataset \
+        yohei31to/pcl_build:latest /cmake.sh
+}
+
+make() {
+    docker run -it --rm \
+        -v $PROJECT_PATH:/project -v$dataset:/dataset \
+        yohei31to/pcl_build:latest /make.sh
+}
+rm() {
+    docker run -it --rm \
+        -v $PROJECT_PATH:/project \
+        yohei31to/pcl_build:latest rm -rf /project/*
+}
+run() {
+    v=$(echo "$@")
+    echo $v
+    if [ "$v" != "" ]; then
+        cmd="/exec.sh $v"
+    else
+        cmd="/bin/bash"
+    fi
+    echo $cmd
+    docker run -it --rm \
+        -v /tmp/.X11-unix/:/tmp/.X11-unix/ -e DISPLAY=$DISPLAY \
+        --device=/dev/dri:/dev/dri \
+        -v $PROJECT_PATH:/project -v$dataset:$dataset -v$dataset:/dataset \
+        yohei31to/pcl_build:latest $cmd
+}
+
+$@
