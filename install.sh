@@ -1,3 +1,5 @@
+sudo apt update && sudo apt upgrade
+sudo docker pull yohei31to/pcl_builder:latest
 wget https://raw.githubusercontent.com/YoheiSaito/MyPCLTemplate/master/pcl_builder -O pcl_builder
 chmod +x pcl_builder
 install_path=$HOME/.local/bin/
@@ -9,4 +11,3 @@ else
   export PATH=$PATH:$(echo $install_path)
   echo "export PATH=\$PATH:$(echo $install_path)" >> $HOME/.profile
 fi
-sudo docker pull yohei31to/pcl_builder:latest
