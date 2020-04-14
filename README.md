@@ -5,6 +5,9 @@ Debian系linuxでdockerをインストールしてから
 
 ``` curl -s https://raw.githubusercontent.com/YoheiSaito/MyPCLTemplate/master/install.sh | bash ```
 
+dockerでマウントしたいdatasetがある場合は 
+~/.local/bin/pcl_builder内のdatasetを編集しましょう
+
 ## pcl_build
 ### init
 ``` pcl_build プロジェクト名 ```  
