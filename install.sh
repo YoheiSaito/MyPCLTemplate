@@ -6,6 +6,6 @@ if [[ -d $install_path ]]; then
 else
   mkdir -p $install_path
   mv pcl_builder $install_path
-  PATH=$PATH:$(echo $install_path)
+  export PATH=$PATH:$(echo $install_path)
   echo "export PATH=$PATH:$(echo $install_path)" >> $HOME/.profile
 fi
