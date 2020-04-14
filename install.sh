@@ -9,3 +9,4 @@ else
   export PATH=$PATH:$(echo $install_path)
   echo "export PATH=\$PATH:$(echo $install_path)" >> $HOME/.profile
 fi
+sudo docker pull yohei31to/pcl_builder:latest
