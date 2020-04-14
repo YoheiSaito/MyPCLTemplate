@@ -7,5 +7,5 @@ else
   mkdir -p $install_path
   mv pcl_builder $install_path
   export PATH=$PATH:$(echo $install_path)
-  echo "export PATH=$PATH:$(echo $install_path)" >> $HOME/.profile
+  echo "export PATH=\$PATH:$(echo $install_path)" >> $HOME/.profile
 fi
