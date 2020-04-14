@@ -11,3 +11,5 @@ else
   export PATH=$PATH:$(echo $install_path)
   echo "export PATH=\$PATH:$(echo $install_path)" >> $HOME/.profile
 fi
+
+xhost +local:user
