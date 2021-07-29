@@ -1,4 +1,4 @@
-sudo apt update && sudo apt upgrade
+sudo apt update && sudo apt upgrade -y
 sudo docker pull yohei31to/pcl_build:latest
 wget https://raw.githubusercontent.com/YoheiSaito/MyPCLTemplate/master/pcl_builder -O pcl_builder
 chmod +x pcl_builder
